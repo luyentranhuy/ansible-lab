@@ -1,0 +1,13 @@
+---
+- name: Kịch bản kiểm tra kết nối SSH
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Thử module ping
+      ansible.builtin.ping:
+    - name: Xem thông tin hệ điều hành
+      ansible.builtin.command: uname -a
+      register: os_info
+    - name: Show kết quả
+      debug:
+        msg: "Kết nối thành công tới {{ inventory_hostname }}. Hệ điều hành: {{ os_info.stdout }}"
