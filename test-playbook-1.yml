@@ -1,0 +1,29 @@
+- name: Test session hold with basic commands
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Run whoami command
+      ansible.builtin.command: whoami
+      register: whoami_result
+
+    - name: Show whoami output
+      ansible.builtin.debug:
+        msg: "Current user: {{ whoami_result.stdout }}"
+
+    - name: Read /etc/environment file
+      ansible.builtin.command: cat /etc/environment
+      register: env_result
+      ignore_errors: yes   # trong trường hợp file không tồn tại
+
+    - name: Show /etc/environment content
+      ansible.builtin.debug:
+        msg: "Environment file content:\n{{ env_result.stdout }}"
+
+    - name: Wait for 60 seconds (hold session)
+      ansible.builtin.pause:
+        seconds: 60
+      register: pause_result
+
+    - name: Session hold completed
+      ansible.builtin.debug:
+        msg: "Finished waiting 60 seconds"
