@@ -1,30 +1,40 @@
-- name: PHUONG AN 1 - Ghi log vao System Log RHEL
+---
+- name: Playbook thuc thi va ghi log audit tren RHEL
   hosts: all
   become: yes
+  become_method: sudo
   tasks:
-    - name: Run whoami
-      ansible.builtin.shell: |
-        RES=$(whoami)
-        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: whoami | RES: $RES"
-    
-    - name: Run ip a
-      ansible.builtin.shell: |
-        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: ip a | START"
-        ip a > /dev/null
-        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: ip a | END"
+    - name: 1. Them dong no_proxy vao /etc/environment (Dung lineinfile cho thong minh)
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        line: 'no_proxy="msb.com"'
+        state: present
+        insertafter: EOF
+      register: update_env
 
-    - name: Update no_proxy in /etc/environment
+    - name: 2. Ghi log vao /var/log/messages bang duong dan tuyet doi
       ansible.builtin.shell: |
-        echo 'no_proxy="msb.com"' >> /etc/environment
-        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: Added no_proxy to /etc/environment"
+        /usr/bin/logger -t ANSIBLE_AUDIT "USER: admin_local | ACTION: Checked/Updated /etc/environment | CHANGED: {{ update_env.changed }}"
+      args:
+        executable: /bin/bash
 
-    - name: Cat /etc/environment and log
+    - name: 3. Chay lenh kiem tra (whoami va ip a) nhu yeu cau ban dau
       ansible.builtin.shell: |
-        CONTENT=$(cat /etc/environment)
-        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: cat /etc/environment | CONTENT: $CONTENT"
-        echo "$CONTENT"
-      register: env_output
+        RES_USER=$(/usr/bin/whoami)
+        /usr/bin/logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: whoami | RESULT: $RES_USER"
+        
+        /usr/bin/ip a > /tmp/ip_check.txt
+        /usr/bin/logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: ip a | STATUS: Saved to /tmp/ip_check.txt"
+      args:
+        executable: /bin/bash
 
-    - name: Ket qua file environment
+    - name: 4. Doc file environment de hien thi len man hinh Ansible
+      ansible.builtin.command: cat /etc/environment
+      register: final_env
+
+    - name: 5. Show ket qua cuoi cung
       ansible.builtin.debug:
-        var: env_output.stdout_lines
+        msg: 
+          - "Noi dung file environment:"
+          - "{{ final_env.stdout_lines }}"
+          - "Check log he thong bang lenh: sudo grep ANSIBLE_AUDIT /var/log/messages"
