@@ -1,0 +1,18 @@
+---
+- name: Force Update Environment
+  hosts: all
+  gather_facts: no  # TẮT cái này để chạy thẳng vào task
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Ghi truc tiep bang shell thô
+      ansible.builtin.shell: |
+        echo 'no_proxy="msb.com"' > /etc/environment
+        /usr/bin/logger -t ANSIBLE_AUDIT "DA GHI THANH CONG TU AWX"
+      args:
+        executable: /bin/bash
+      register: out
+
+    - name: Show output de xem tren AWX UI
+      ansible.builtin.debug:
+        var: out.stdout
