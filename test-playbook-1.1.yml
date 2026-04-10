@@ -1,0 +1,30 @@
+- name: PHUONG AN 1 - Ghi log vao System Log RHEL
+  hosts: all
+  become: yes
+  tasks:
+    - name: Run whoami
+      ansible.builtin.shell: |
+        RES=$(whoami)
+        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: whoami | RES: $RES"
+    
+    - name: Run ip a
+      ansible.builtin.shell: |
+        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: ip a | START"
+        ip a > /dev/null
+        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: ip a | END"
+
+    - name: Update no_proxy in /etc/environment
+      ansible.builtin.shell: |
+        echo 'no_proxy="msb.com"' >> /etc/environment
+        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: Added no_proxy to /etc/environment"
+
+    - name: Cat /etc/environment and log
+      ansible.builtin.shell: |
+        CONTENT=$(cat /etc/environment)
+        logger -t ANSIBLE_AUDIT "USER: admin_local | CMD: cat /etc/environment | CONTENT: $CONTENT"
+        echo "$CONTENT"
+      register: env_output
+
+    - name: Ket qua file environment
+      ansible.builtin.debug:
+        var: env_output.stdout_lines
