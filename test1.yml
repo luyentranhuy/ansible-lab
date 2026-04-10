@@ -1,0 +1,16 @@
+- name: Identify Server
+  hosts: all
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Get Identity
+      ansible.builtin.shell: |
+        echo "Hostname: $(hostname)"
+        echo "IP: $(hostname -I)"
+        echo "Whoami: $(whoami)"
+        echo "Time: $(date)"
+      register: identity
+
+    - name: Show Identity
+      ansible.builtin.debug:
+        var: identity.stdout_lines
